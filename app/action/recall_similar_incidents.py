@@ -25,7 +25,6 @@ root causes, or resolutions.
         results = await cognee.recall(
             query_text=query,
             only_context=True,
-            scope="graph",
         )
         similar_incidents = []
 

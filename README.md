@@ -98,6 +98,7 @@ paste these in Swagger UI at `http://localhost:8000/docs`
 
 ### Create incident
 
+incident 1
 ```json
 {
   "title": "API gateway timeout on payment service",
@@ -108,6 +109,26 @@ paste these in Swagger UI at `http://localhost:8000/docs`
 }
 ```
 
+incident 2
+```json
+{
+  "title": "CDN cache invalidation failure",
+  "severity": "high",
+  "service": "cdn-edge",
+  "environment": "production",
+  "symptoms": "stale assets served to users. cache purge requests failing with 502. image load times increased 300%."
+}
+```
+incident 3 (let's test with this one)
+```json
+{
+  "title": "Order processing queue backpressure",
+  "severity": "critical",
+  "service": "order-service",
+  "environment": "production",
+  "symptoms": "orders stuck in pending state. rabbitmq queue depth at 50k. consumer pod OOM kills recurring."
+}
+```
 you'll get back the incident + predicted RCA. copy the `id` from the response.
 
 ### Resolve incident
@@ -120,6 +141,20 @@ replace `{id}` with the actual id from create response.
 }
 ```
 
+### Finally testing recall
+
+create a 4th incident with similar symptoms to incident 3 to test recall
+```json
+{
+  "title": "Payment service degraded after deploy",
+  "severity": "high",
+  "service": "payment-gateway",
+  "environment": "production",
+  "symptoms": "transactions failing with 502 after new deployment. latency spikes from 100ms to 8s."
+}
+```
+
+**Check the response**, the `recalled_from` field should show similar incidents from your previous ones.
 ### List incidents
 
 `GET /incidents` — no body needed. just hit it.
