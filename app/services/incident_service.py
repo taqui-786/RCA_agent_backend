@@ -8,11 +8,41 @@ from app.schemas.incident import (
     IncidentCreate,
     IncidentDetailResponse,
     IncidentResolveRequest,
+    RecalledFromItem,
 )
 from cognee.modules.engine.operations.setup import setup
 
 _store: list[dict] = []
 _counter = 0
+
+
+def _score_recalled(text: str, service: str, environment: str) -> int:
+    score = 0
+    for line in text.split("\n"):
+        if line.startswith("Service:") and service in line:
+            score += 2
+        elif line.startswith("Environment:") and environment in line:
+            score += 1
+    return score
+
+
+def _parse_recalled(text: str) -> RecalledFromItem:
+    title = symptom = service = fix = ""
+    for line in text.split("\n"):
+        if line.startswith("Title:"):
+            title = line.split(":", 1)[1].strip()
+        elif line.startswith("Symptoms:"):
+            symptom = line.split(":", 1)[1].strip()
+        elif line.startswith("Service:"):
+            service = line.split(":", 1)[1].strip()
+        elif line.startswith("Fix Applied:"):
+            fix = line.split(":", 1)[1].strip()
+    return RecalledFromItem(
+        incident_title=title,
+        symptom=symptom,
+        service=service,
+        fix=fix or "Not resolved yet",
+    )
 
 
 async def create_incident(data: IncidentCreate) -> IncidentDetailResponse:
@@ -34,6 +64,10 @@ async def create_incident(data: IncidentCreate) -> IncidentDetailResponse:
     await setup()
 
     similar_incidents = await recall_similar_incidents(incident)
+    similar_incidents.sort(
+        key=lambda t: _score_recalled(t, incident.service, incident.environment),
+        reverse=True,
+    )
     rca = await generate_rca(incident, similar_incidents)
 
     incident.root_cause = rca.root_cause
@@ -43,7 +77,7 @@ async def create_incident(data: IncidentCreate) -> IncidentDetailResponse:
         "confidence": rca.confidence,
         "recommended_fix": rca.recommended_fix,
         "first_action": rca.first_action,
-        "recalled_from": similar_incidents,
+        "recalled_from": [_parse_recalled(s) for s in similar_incidents],
     }
 
     _store.append(record)
@@ -61,6 +95,7 @@ async def resolve_incident(
             continue
 
         record["status"] = "resolved"
+        record["root_cause"] = data.confirmed_root_cause
         record["fix_applied"] = data.fix_applied
         record["updated_at"] = datetime.now(timezone.utc)
 

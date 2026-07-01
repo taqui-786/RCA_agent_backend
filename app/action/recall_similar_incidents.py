@@ -3,7 +3,7 @@
 
 
 
-from cognee import cognee
+from cognee import cognee, SearchType
 from fastapi import HTTPException
 from app.schemas.incident import Incident
 
@@ -11,27 +11,17 @@ from app.schemas.incident import Incident
 async def recall_similar_incidents(
     incident: Incident,
 ) -> list[str]:
-    query = f"""
-Find previous cloud incidents similar to:
-Service: {incident.service}
-Environment: {incident.environment}
-Symptoms: {incident.symptoms}
-Return incidents with similar symptoms,
-root causes, or resolutions.
-""".strip()
-    
-    try:
+    query = f"cloud incident on service {incident.service} in {incident.environment}. symptoms: {incident.symptoms}"
 
+    try:
         results = await cognee.recall(
             query_text=query,
+            query_type=SearchType.CHUNKS,
             only_context=True,
+            top_k=5,
         )
-        similar_incidents = []
 
-        for item in results:
-            similar_incidents.append(item.text)
-        
-        return similar_incidents
+        return [item.text for item in results]
     except Exception as e:
         raise HTTPException(
             status_code=500,

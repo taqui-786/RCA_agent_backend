@@ -28,6 +28,13 @@ class IncidentResponse(IncidentCreate):
     updated_at: datetime
 
 
+class RecalledFromItem(BaseModel):
+    incident_title: str = ""
+    symptom: str = ""
+    service: str = ""
+    fix: str = ""
+
+
 class RCAResponse(BaseModel):
 
     root_cause: str
@@ -42,6 +49,7 @@ class RCAResponse(BaseModel):
 
 
 class IncidentResolveRequest(BaseModel):
+    confirmed_root_cause: str = Field(..., min_length=1, max_length=2000)
     fix_applied: str = Field(..., min_length=1, max_length=2000)
 
 
@@ -50,7 +58,7 @@ class IncidentDetailResponse(IncidentResponse):
     confidence: int | None = None
     recommended_fix: str | None = None
     first_action: str | None = None
-    recalled_from: list[str] | None = None
+    recalled_from: list[RecalledFromItem] | None = None
     fix_applied: str | None = None
 
 

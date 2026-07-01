@@ -5,24 +5,18 @@ from app.schemas.incident import Incident
 
 def incident_to_memory(incident: Incident) -> str:
     memory = f"""
-Incident ID: {incident.id}
 Title: {incident.title}
-Severity: {incident.severity}
 Service: {incident.service}
 Environment: {incident.environment}
+Severity: {incident.severity.value}
 Symptoms: {incident.symptoms}
-Status: {incident.status}
 """.strip()
 
     if incident.root_cause:
-        memory += f"""
-Confirmed Root Cause: {incident.root_cause}
-"""
+        memory += f"\nRoot Cause: {incident.root_cause}"
 
     if incident.fix_applied:
-        memory += f"""
-Fix Applied: {incident.fix_applied}
-"""
+        memory += f"\nFix Applied: {incident.fix_applied}"
 
     return memory
 
