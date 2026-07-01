@@ -19,13 +19,13 @@ async def resolve_incident_endpoint(incident_id: int, data: IncidentResolveReque
 
 
 @router.get("/{incident_id}", response_model=IncidentDetailResponse)
-def get_incident_endpoint(incident_id: int):
-    result = get_incident(incident_id)
+async def get_incident_endpoint(incident_id: int):
+    result = await get_incident(incident_id)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found")
     return result
 
 
 @router.get("", response_model=list[IncidentDetailResponse])
-def list_incidents_endpoint():
-    return list_incidents()
+async def list_incidents_endpoint():
+    return await list_incidents()

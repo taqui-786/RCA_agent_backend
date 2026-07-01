@@ -24,7 +24,7 @@ Symptoms: {incident.symptoms}
 async def remember_incident(incident: Incident) -> None:
     memory_text = incident_to_memory(incident)
     try:
-        await cognee.remember(memory_text)
+        await cognee.remember(memory_text,self_improvement=False)
         return True
     except Exception as e:
         raise HTTPException(
